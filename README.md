@@ -77,6 +77,8 @@ _Finally, I create the security groups having the inbound rule allowing port 330
 
 
  _Public Subnet_ [ Accessible for Public World! ] 
+ 
+ 
             resource "aws_subnet" "vishnu_public_subnet" {
                         depends_on=[aws_vpc.vishnu_vpc]
                         vpc_id = "${aws_vpc.vishnu_vpc.id}"
@@ -87,8 +89,11 @@ _Finally, I create the security groups having the inbound rule allowing port 330
                           Name = "vishnu_public_subnet"
                         }
                       }
+                      
 
  _Private Subnet_ [ Restricted for Public World! ]
+ 
+ 
             resource "aws_subnet" "vishnu_private_subnet" {
                         depends_on=[aws_vpc.vishnu_vpc]
                         vpc_id = "${aws_vpc.vishnu_vpc.id}"
@@ -98,7 +103,10 @@ _Finally, I create the security groups having the inbound rule allowing port 330
                           Name = "vishnu_private_subnet"
                         }
                       }
+                      
+                      
  _Route table for public subnet_  Create a routing table for Internet gateway so that instance can connect to outside world, update and associate it with public subnet.
+
 
           resource "aws_route_table" "vishnu_rt" {
                       depends_on=[aws_subnet.vishnu_public_subnet]
@@ -290,4 +298,60 @@ _Bastion host allow to sql with ssh_
             }
           } 
                       
-                      
+  _**Step-4.**_                          
+_Now, I am creating a NAT gateway to connect our VPC/Network to the internet world and attach this gateway to our VPC in the public network
+Update the routing table of the private subnet, so that to access the internet it uses the nat gateway created in the public subnet_
+
+
+_Creation of EIP _
+
+              resource "aws_eip" "vishnu-ip" {
+                vpc              = true
+                public_ipv4_pool = "amazon"
+              }
+              output "new_output" {
+                  value=  aws_eip.vishnu-ip
+              }
+                  
+_Creating NAT gateway in public subnet_
+
+              
+              resource "aws_nat_gateway" "vishnu_nat_gw" {
+                depends_on    = [aws_eip.vishnu-ip]
+                allocation_id = aws_eip.vishnu-ip.id
+                subnet_id     = aws_subnet.vishnu_public_subnet.id
+
+
+                tags = {
+                  Name = "vishnu_nat_gw"
+                }
+              }
+
+
+
+_Creating the route table for nat gateway (Private Subnet)_
+
+
+              resource "aws_route_table" "vp_private_subnet_for_rt" {
+                depends_on = [aws_nat_gateway.vishnu_nat_gw]
+                vpc_id = aws_vpc.vishnu_vpc.id
+                route {
+                  cidr_block = "0.0.0.0/0"
+
+                  gateway_id = aws_nat_gateway.vishnu_nat_gw.id
+                }
+                tags = {
+                  Name = "vp_private_subnet_for_rt"
+                }
+              }
+              
+              
+_Associating the route to the private subnet_
+
+
+              resource "aws_route_table_association" "vp_private_subnet_for_rt_association" {
+                depends_on = [aws_route_table.vp_private_subnet_for_rt]
+                subnet_id      = aws_subnet.vishnu_private_subnet.id
+                route_table_id = aws_route_table.vp_private_subnet_for_rt.id
+              }
+
