@@ -452,5 +452,12 @@ _The `terraform init` command is used to initialize a working directory containi
 
 ![instances](https://user-images.githubusercontent.com/66829650/92616322-b5cb9880-f2db-11ea-894f-3148cc793e45.png)
 
+**Here, the web page...**
+
 ![wordpress](https://user-images.githubusercontent.com/66829650/92616528-f4f9e980-f2db-11ea-8a85-282002b1f02d.png)
+
+
+
+![thank-you-page-examples](https://user-images.githubusercontent.com/66829650/92617556-08f21b00-f2dd-11ea-99a7-3f0bfe609b73.jpg)
+
 
